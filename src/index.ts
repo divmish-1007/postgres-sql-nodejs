@@ -9,23 +9,28 @@ const pgClient = new Client("postgresql://neondb_owner:npg_IOYWng3r0eSm@ep-holy-
 pgClient.connect()
 
 app.post('/signup', async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+    const email = req.body.email;
+
+    const city = req.body.city;
+    const country = req.body.country;
+    const street = req.body.street;
+    const pincode = req.body.pincode;
+
     try {
-        const username = req.body.username
-        const password = req.body.password
-        const email = req.body.email
-
-        // The below code has problem of SQL Injection
-
-        // const insertQuery = `INSERT INTO users (username, password, email) VALUES('${username}', '${password}', '${email}')`
-
-        // const response = await pgClient.query(insertQuery)
-
-        // Solution of SQL Injection is that use variable and don't append queries direct to the query
-        const insertQuery = `INSERT INTO users (username, password, email) VALUES($1, $2, $3)`
+        const insertQuery = `INSERT INTO users (username, password, email) VALUES($1, $2, $3) RETURNING id`
         const response = await pgClient.query(insertQuery, [username, password, email])
+        const userId = response.rows[0].id
 
+        const adressInsertQuery = `INSERT INTO addresses (city, country, street, pincode, user_id) VALUES($1, $2, $3, $4, $5)`
+        const addressResponse = await pgClient.query(adressInsertQuery, [city, country, street, pincode, userId])
+
+        res.json({
+            message: "You have signed up"
+        })
     }
-    catch(e) {
+    catch (e) {
         res.json({
             message: "Error while signing up"
         })
